@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  10% { transform: translateX(-4px) translateY(-2px); }
+  20% { transform: translateX(4px) translateY(2px); }
+  30% { transform: translateX(-4px) translateY(0); }
+  40% { transform: translateX(4px) translateY(-2px); }
+  50% { transform: translateX(-2px) translateY(2px); }
+  60% { transform: translateX(2px) translateY(0); }
+  70% { transform: translateX(-3px) translateY(-1px); }
+  80% { transform: translateX(3px) translateY(1px); }
+  90% { transform: translateX(-1px) translateY(0); }
+}
+
+.shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.4)); }
+  50% { filter: drop-shadow(0 0 12px rgba(250, 204, 21, 0.8)); }
+}
+
+.star-glow {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes flash {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.8; }
+}
+
+.flash-overlay {
+  animation: flash 0.15s ease-out forwards;
+}
+
+/* No-select for game area */
+.game-canvas {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Star field background */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}

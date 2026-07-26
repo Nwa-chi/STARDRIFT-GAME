@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "leaderboard": {
+      ".read": true,
+      ".write": "auth != null && auth.uid == 'tZf56Gj2HfRgvCINTr71hxcfOby2'"
+    },
+    "config": {
+      ".read": true,
+      ".write": "auth != null && auth.uid == 'tZf56Gj2HfRgvCINTr71hxcfOby2'"
+    }
+  }
+}

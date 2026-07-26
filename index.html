@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="STARDRIFT" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="application-name" content="STARDRIFT" />
+    <link rel="apple-touch-icon" href="/icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>STARDRIFT - Space Arcade</title>
+    <style>
+      html, body, #root {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: none;
+      }
+      /* Safe area insets for notched phones */
+      .safe-top { padding-top: env(safe-area-inset-top); }
+      .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.tooling/
+.signing/
+*.jks
+*.keystore
+google-services.json
+
+# Build output
+dist/
+*.aab
+*.apk
+*.idsig
+firebase-login.log
+firebase-login.err
+.firebase/
+
+# Capacitor native platforms (generated)
+ios/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
