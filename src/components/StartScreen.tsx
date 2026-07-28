@@ -2,10 +2,9 @@ import { getHighScores } from '../utils/scores';
 
 interface Props {
   onStart: () => void;
-  onAdmin: () => void;
 }
 
-export default function StartScreen({ onStart, onAdmin }: Props) {
+export default function StartScreen({ onStart }: Props) {
   const highScores = getHighScores();
 
   return (
@@ -65,14 +64,6 @@ export default function StartScreen({ onStart, onAdmin }: Props) {
             </div>
           </div>
         )}
-
-        {/* Hidden admin link */}
-        <button
-          onClick={onAdmin}
-          className="text-zinc-800 hover:text-zinc-600 text-[10px] transition-colors mt-4 opacity-0 hover:opacity-100"
-        >
-          Admin
-        </button>
       </div>
     </div>
   );

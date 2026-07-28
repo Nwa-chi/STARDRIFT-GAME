@@ -16,12 +16,10 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState>('start');
   const [score, setScore] = useState(0);
   const [newHighScore, setNewHighScore] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       const ownerSignedIn = isOwner(user);
-      setIsAdmin(ownerSignedIn);
 
       if (user && !ownerSignedIn) {
         void signOut(auth);
@@ -65,17 +63,7 @@ export default function App() {
     setGameState('playing');
   }, []);
 
-  const handleAdminAccess = useCallback(() => {
-    if (isAdmin) {
-      setGameState('admin');
-    } else {
-      window.location.hash = '#admin';
-      setGameState('admin-login');
-    }
-  }, [isAdmin]);
-
   const handleAdminLogin = useCallback(() => {
-    setIsAdmin(true);
     setGameState('admin');
   }, []);
 
@@ -107,7 +95,7 @@ export default function App() {
       )}
 
       {gameState === 'start' && (
-        <StartScreen onStart={handleStart} onAdmin={handleAdminAccess} />
+        <StartScreen onStart={handleStart} />
       )}
 
       {gameState === 'playing' && (
@@ -133,15 +121,16 @@ export default function App() {
         <AdminDashboard />
       )}
 
-      {/* Admin link - subtle, bottom right */}
+      {/* Public policy link for app-store compliance */}
       {gameState === 'start' && (
-        <button
-          onClick={handleAdminAccess}
-          className="absolute bottom-4 right-4 text-zinc-800 hover:text-zinc-600 text-[10px] transition-colors z-10"
-          title="Admin Panel"
+        <a
+          href="/privacy.html"
+          target="_blank"
+          rel="noreferrer"
+          className="absolute bottom-4 left-4 text-zinc-600 hover:text-zinc-400 text-[10px] transition-colors z-10"
         >
-          Admin
-        </button>
+          Privacy
+        </a>
       )}
 
       {/* Back to game from admin */}
