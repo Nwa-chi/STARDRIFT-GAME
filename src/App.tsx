@@ -85,7 +85,12 @@ export default function App() {
   }, []);
 
   return (
-    <div className="relative w-full h-full min-h-[100dvh] overflow-hidden bg-black select-none" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div
+      className={`relative w-full h-full min-h-[100dvh] bg-black select-none ${
+        gameState === 'admin' || gameState === 'admin-login' ? 'overflow-y-auto' : 'overflow-hidden'
+      }`}
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       {/* Starfield background layer (only when not in admin) */}
       {gameState !== 'admin' && gameState !== 'admin-login' && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
