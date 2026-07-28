@@ -7,7 +7,7 @@
 - App or game: Game
 - Category: Arcade
 - Package name: `com.stardrift.game`
-- Release: `1.0.2` (`versionCode 3`)
+- Release: `1.0.1` (`versionCode 3`)
 - Website: `https://stardrift.online`
 - Privacy policy: `https://stardrift.online/privacy.html`
 - Support email: `kennwachukz@gmail.com`

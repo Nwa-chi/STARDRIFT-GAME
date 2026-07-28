@@ -12,13 +12,25 @@ import { isOwner } from './utils/owner';
 
 type GameState = 'start' | 'playing' | 'paused' | 'gameover' | 'admin-login' | 'admin';
 
+const isLocalAdminPreview = () => (
+  (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+  && window.location.hash === '#admin-preview'
+);
+
 export default function App() {
-  const [gameState, setGameState] = useState<GameState>('start');
+  const [gameState, setGameState] = useState<GameState>(() => (
+    isLocalAdminPreview() ? 'admin' : 'start'
+  ));
   const [score, setScore] = useState(0);
   const [newHighScore, setNewHighScore] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (isLocalAdminPreview()) {
+        setGameState('admin');
+        return;
+      }
+
       const ownerSignedIn = isOwner(user);
 
       if (user && !ownerSignedIn) {
@@ -118,7 +130,7 @@ export default function App() {
       )}
 
       {gameState === 'admin' && (
-        <AdminDashboard />
+        <AdminDashboard initialTab={isLocalAdminPreview() ? 'preview' : 'scores'} />
       )}
 
       {/* Public policy link for app-store compliance */}

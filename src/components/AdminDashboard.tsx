@@ -3,6 +3,7 @@ import { signOut } from '@firebase/auth';
 import { ref, get, set, update, remove } from '@firebase/database';
 import { auth, database } from '../utils/firebase';
 import { getHighScores } from '../utils/scores';
+import Game from './Game';
 
 interface PlayerScore {
   score: number;
@@ -25,6 +26,12 @@ interface GameConfig {
   difficultyScale: number;
 }
 
+type AdminTab = 'scores' | 'config' | 'analytics' | 'preview';
+
+interface Props {
+  initialTab?: AdminTab;
+}
+
 const DEFAULT_CONFIG: GameConfig = {
   asteroidMinSpeed: 150,
   asteroidMaxSpeed: 400,
@@ -33,9 +40,9 @@ const DEFAULT_CONFIG: GameConfig = {
   difficultyScale: 80,
 };
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ initialTab = 'scores' }: Props) {
   const [userEmail, setUserEmail] = useState('');
-  const [activeTab, setActiveTab] = useState<'scores' | 'config' | 'analytics'>('scores');
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
   const [localScores, setLocalScores] = useState<PlayerScore[]>([]);
   const [publicScores, setPublicScores] = useState<LeaderboardEntry[]>([]);
   const [config, setConfig] = useState<GameConfig>(DEFAULT_CONFIG);
@@ -44,6 +51,9 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [newEntry, setNewEntry] = useState({ playerName: '', score: '' });
+  const [previewScore, setPreviewScore] = useState(0);
+  const [previewGameOver, setPreviewGameOver] = useState(false);
+  const [previewRun, setPreviewRun] = useState(0);
 
   useEffect(() => {
     setUserEmail(auth.currentUser?.email || '');
@@ -153,6 +163,12 @@ export default function AdminDashboard() {
     window.location.reload();
   };
 
+  const restartPreview = () => {
+    setPreviewScore(0);
+    setPreviewGameOver(false);
+    setPreviewRun((run) => run + 1);
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -190,7 +206,7 @@ export default function AdminDashboard() {
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-zinc-900 rounded-lg p-1 border border-zinc-800 w-fit">
-          {(['scores', 'config', 'analytics'] as const).map((tab) => (
+          {(['scores', 'config', 'analytics', 'preview'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -389,6 +405,76 @@ export default function AdminDashboard() {
                   <p className={`text-2xl font-bold font-mono ${stat.color}`}>{stat.value}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Owner-only gameplay preview */}
+        {activeTab === 'preview' && (
+          <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-sm font-semibold text-zinc-300">Gameplay Preview</h2>
+                  <span className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-2 py-0.5 text-[10px] font-medium text-yellow-300">
+                    Version 1.0.1
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-500">
+                  Owner-only test area. These controls are not published to players.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={restartPreview}
+                className="w-fit rounded-md border border-yellow-500/30 bg-yellow-500/15 px-4 py-2 text-xs font-medium text-yellow-300 transition-colors hover:bg-yellow-500/25"
+              >
+                Restart Preview
+              </button>
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,390px)_1fr]">
+              <div className="relative mx-auto aspect-[9/16] w-full max-w-[390px] overflow-hidden rounded-[2rem] border-4 border-zinc-700 bg-black shadow-2xl shadow-black lg:mx-0">
+                <Game
+                  key={previewRun}
+                  enhancedControls
+                  onGameOver={(finalScore) => {
+                    setPreviewScore(finalScore);
+                    setPreviewGameOver(true);
+                  }}
+                  onPause={() => {}}
+                  setScore={setPreviewScore}
+                />
+
+                {previewGameOver && (
+                  <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="text-center">
+                      <p className="mb-1 text-xs uppercase tracking-[0.25em] text-zinc-500">Preview score</p>
+                      <p className="mb-5 font-mono text-4xl font-bold text-yellow-300">{previewScore}</p>
+                      <button
+                        type="button"
+                        onClick={restartPreview}
+                        className="rounded-full border border-yellow-300/40 bg-yellow-400 px-5 py-2 text-xs font-black uppercase tracking-wider text-black"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="h-fit rounded-xl border border-zinc-800 bg-zinc-900/30 p-5">
+                <h3 className="mb-4 text-sm font-semibold text-zinc-300">What to test</h3>
+                <div className="space-y-3 text-xs text-zinc-500">
+                  <p><span className="text-indigo-300">Joystick:</span> drag the bottom-left control to move in every direction.</p>
+                  <p><span className="text-orange-300">Fire:</span> press or hold the bottom-right button to shoot.</p>
+                  <p><span className="text-yellow-300">Sound:</span> listen for shooting, star collection, asteroid destruction, and game-over effects.</p>
+                  <p><span className="text-zinc-300">Desktop:</span> WASD or arrow keys move; Space shoots.</p>
+                </div>
+                <div className="mt-5 rounded-lg border border-green-500/20 bg-green-500/5 p-3">
+                  <p className="text-xs text-green-400">Current preview score: <span className="font-mono font-bold">{previewScore}</span></p>
+                </div>
+              </div>
             </div>
           </div>
         )}
