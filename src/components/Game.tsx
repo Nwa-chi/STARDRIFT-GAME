@@ -14,8 +14,6 @@ const STAR_SIZE = 8;
 const ASTEROID_MIN = 18;
 const ASTEROID_MAX = 42;
 const BASE_SPEED = 150;
-const PROJECTILE_SPEED = 720;
-const FIRE_INTERVAL = 150;
 
 interface Particle {
   x: number;
@@ -34,14 +32,7 @@ interface ScreenShake {
   intensity: number;
 }
 
-interface Projectile {
-  x: number;
-  y: number;
-  vy: number;
-  life: number;
-}
-
-type SoundName = 'shoot' | 'collect' | 'destroy' | 'gameOver';
+type SoundName = 'thrust' | 'collect' | 'gameOver';
 
 export default function Game({ onGameOver, onPause, setScore, paused, enhancedControls = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -50,7 +41,6 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
     player: { x: 0, y: 0, size: PLAYER_SIZE },
     stars: [] as { x: number; y: number; collected: boolean; glow: number }[],
     asteroids: [] as { x: number; y: number; size: number; vx: number; vy: number; rotation: number; rotSpeed: number }[],
-    projectiles: [] as Projectile[],
     particles: [] as Particle[],
     shake: { x: 0, y: 0, intensity: 0 } as ScreenShake,
     score: 0,
@@ -67,8 +57,6 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
   const joystickRef = useRef<HTMLDivElement>(null);
   const joystickPointerRef = useRef<number | null>(null);
   const joystickInputRef = useRef({ x: 0, y: 0 });
-  const fireHeldRef = useRef(false);
-  const lastShotRef = useRef(0);
   const audioContextRef = useRef<AudioContext | null>(null);
   const [joystickVisual, setJoystickVisual] = useState({ x: 0, y: 0, active: false });
   const spawnTimerRef = useRef(0);
@@ -98,9 +86,8 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
       duration: number;
       volume: number;
     }> = {
-      shoot: { type: 'square', start: 620, end: 260, duration: 0.08, volume: 0.055 },
+      thrust: { type: 'sawtooth', start: 120, end: 76, duration: 0.14, volume: 0.025 },
       collect: { type: 'sine', start: 660, end: 1040, duration: 0.16, volume: 0.09 },
-      destroy: { type: 'triangle', start: 190, end: 60, duration: 0.2, volume: 0.11 },
       gameOver: { type: 'sawtooth', start: 150, end: 42, duration: 0.5, volume: 0.12 },
     };
     const config = settings[sound];
@@ -181,24 +168,6 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
     spawnParticles(x, y, 15, '#facc15', 200);
   }, [spawnParticles]);
 
-  const shoot = useCallback(() => {
-    if (!enhancedControls) return;
-
-    const s = state.current;
-    const now = performance.now();
-    if (s.gameOver || s.paused || now - lastShotRef.current < FIRE_INTERVAL) return;
-
-    lastShotRef.current = now;
-    s.projectiles.push({
-      x: s.player.x,
-      y: s.player.y - s.player.size,
-      vy: -PROJECTILE_SPEED,
-      life: 1.4,
-    });
-    spawnParticles(s.player.x, s.player.y - s.player.size, 4, '#fde047', 70);
-    playSound('shoot');
-  }, [enhancedControls, playSound, spawnParticles]);
-
   const triggerShake = useCallback((intensity: number) => {
     state.current.shake.intensity = intensity;
   }, []);
@@ -278,32 +247,6 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      ctx.restore();
-    }
-
-    if (enhancedControls) {
-      // Draw player projectiles
-      ctx.save();
-      ctx.lineCap = 'round';
-      for (const projectile of s.projectiles) {
-        const laser = ctx.createLinearGradient(
-          projectile.x,
-          projectile.y + 15,
-          projectile.x,
-          projectile.y - 15
-        );
-        laser.addColorStop(0, 'rgba(249, 115, 22, 0)');
-        laser.addColorStop(0.35, '#facc15');
-        laser.addColorStop(1, '#ffffff');
-        ctx.shadowColor = '#facc15';
-        ctx.shadowBlur = 14;
-        ctx.strokeStyle = laser;
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(projectile.x, projectile.y + 12);
-        ctx.lineTo(projectile.x, projectile.y - 14);
-        ctx.stroke();
-      }
       ctx.restore();
     }
 
@@ -434,7 +377,7 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
 
     ctx.restore();
     ctx.restore();
-  }, [enhancedControls]);
+  }, []);
 
   const gameLoop = useCallback((time: number) => {
     const s = state.current;
@@ -461,13 +404,9 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
     if (keysRef.current.has('ArrowDown') || keysRef.current.has('KeyS')) s.player.y += playerSpeed * dt;
 
     if (enhancedControls) {
-      // Owner-preview joystick and shooting
+      // Owner-preview joystick movement
       s.player.x += joystickInputRef.current.x * playerSpeed * dt;
       s.player.y += joystickInputRef.current.y * playerSpeed * dt;
-
-      if (fireHeldRef.current || keysRef.current.has('Space')) {
-        shoot();
-      }
     } else if (touchRef.current.active) {
       // Current public touch-and-drag movement
       const tx = touchRef.current.x;
@@ -520,18 +459,6 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
       }
     }
 
-    if (enhancedControls) {
-      // Update projectiles
-      for (let i = s.projectiles.length - 1; i >= 0; i--) {
-        const projectile = s.projectiles[i];
-        projectile.y += projectile.vy * dt;
-        projectile.life -= dt;
-        if (projectile.y < -30 || projectile.life <= 0) {
-          s.projectiles.splice(i, 1);
-        }
-      }
-    }
-
     // Update stars
     const starSpeed = 80 + diffRef.current * 6;
     for (let i = s.stars.length - 1; i >= 0; i--) {
@@ -557,33 +484,6 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
         triggerShake(3 + diffRef.current * 0.3);
         if (enhancedControls) playSound('collect');
         s.stars.splice(i, 1);
-      }
-    }
-
-    if (enhancedControls) {
-      // Projectile collision
-      for (let pIndex = s.projectiles.length - 1; pIndex >= 0; pIndex--) {
-        const projectile = s.projectiles[pIndex];
-        let destroyed = false;
-        for (let aIndex = s.asteroids.length - 1; aIndex >= 0; aIndex--) {
-          const asteroid = s.asteroids[aIndex];
-          const dx = projectile.x - asteroid.x;
-          const dy = projectile.y - asteroid.y;
-          const hitRadius = asteroid.size * 0.72 + 5;
-          if (dx * dx + dy * dy < hitRadius * hitRadius) {
-            s.projectiles.splice(pIndex, 1);
-            s.asteroids.splice(aIndex, 1);
-            s.score += 5;
-            setScore(s.score);
-            spawnParticles(asteroid.x, asteroid.y, 26, '#f97316', 260);
-            spawnParticles(asteroid.x, asteroid.y, 14, '#a5b4fc', 180);
-            triggerShake(4);
-            playSound('destroy');
-            destroyed = true;
-            break;
-          }
-        }
-        if (destroyed) continue;
       }
     }
 
@@ -613,7 +513,7 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
     renderCanvas();
 
     animFrameRef.current = requestAnimationFrame(gameLoop);
-  }, [enhancedControls, onGameOver, setScore, shoot, spawnAsteroid, spawnStar, spawnScoreParticles, spawnExplosion, spawnParticles, triggerShake, playSound, updateParticles, updateShake, renderCanvas]);
+  }, [enhancedControls, onGameOver, setScore, spawnAsteroid, spawnStar, spawnScoreParticles, spawnExplosion, triggerShake, playSound, updateParticles, updateShake, renderCanvas]);
 
   // Resize
   const handleResize = useCallback(() => {
@@ -640,15 +540,11 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
   // Keyboard
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     keysRef.current.add(e.code);
-    if (enhancedControls && e.code === 'Space') {
-      e.preventDefault();
-      shoot();
-    }
     if ((e.code === 'Escape' || e.code === 'KeyP') && !state.current.gameOver) {
       e.preventDefault();
       onPause();
     }
-  }, [enhancedControls, onPause, shoot]);
+  }, [onPause]);
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
     keysRef.current.delete(e.code);
@@ -720,7 +616,8 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
     joystickPointerRef.current = e.pointerId;
     e.currentTarget.setPointerCapture(e.pointerId);
     updateJoystick(e.clientX, e.clientY);
-  }, [updateJoystick]);
+    playSound('thrust');
+  }, [playSound, updateJoystick]);
 
   const handleJoystickPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     if (joystickPointerRef.current !== e.pointerId) return;
@@ -734,18 +631,6 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
     resetJoystick();
   }, [resetJoystick]);
 
-  const handleFirePointerDown = useCallback((e: ReactPointerEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    fireHeldRef.current = true;
-    shoot();
-  }, [shoot]);
-
-  const handleFirePointerEnd = useCallback((e: ReactPointerEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    fireHeldRef.current = false;
-  }, []);
-
   // Init
   useEffect(() => {
     const s = state.current;
@@ -755,14 +640,11 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
     s.paused = false;
     s.asteroids = [];
     s.stars = [];
-    s.projectiles = [];
     s.particles = [];
     s.shake = { x: 0, y: 0, intensity: 0 };
     diffRef.current = 1;
     spawnTimerRef.current = 0;
     starTimerRef.current = 0;
-    lastShotRef.current = 0;
-    fireHeldRef.current = false;
     resetJoystick();
 
     handleResize();
@@ -790,7 +672,6 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
       document.removeEventListener('touchend', handleTouchEnd);
       cancelAnimationFrame(animFrameRef.current);
       if (gameOverTimerRef.current) clearTimeout(gameOverTimerRef.current);
-      fireHeldRef.current = false;
       joystickInputRef.current = { x: 0, y: 0 };
       if (audioContextRef.current) {
         void audioContextRef.current.close();
@@ -843,23 +724,6 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
           </div>
         </div>
 
-        <button
-          type="button"
-          aria-label="Fire"
-          onPointerDown={handleFirePointerDown}
-          onPointerUp={handleFirePointerEnd}
-          onPointerCancel={handleFirePointerEnd}
-          onLostPointerCapture={handleFirePointerEnd}
-          className="pointer-events-auto absolute right-6 md:right-10 w-24 h-24 md:w-28 md:h-28 rounded-full
-                     border-2 border-orange-200/60 bg-gradient-to-br from-yellow-300 via-orange-500 to-red-600
-                     text-black font-black tracking-[0.14em] text-sm md:text-base
-                     shadow-[0_0_32px_rgba(249,115,22,0.38),inset_0_2px_10px_rgba(255,255,255,0.45)]
-                     active:scale-90 active:brightness-125 transition-transform touch-none select-none"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 34px)' }}
-        >
-          <span className="absolute inset-2 rounded-full border border-black/20" />
-          <span className="relative">FIRE</span>
-        </button>
       </div>
       )}
     </div>

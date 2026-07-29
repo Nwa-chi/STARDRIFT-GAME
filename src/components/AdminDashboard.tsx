@@ -437,7 +437,7 @@ export default function AdminDashboard({ initialTab = 'scores' }: Props) {
                 </h2>
                 <p className="max-w-xl text-sm leading-6 text-zinc-400">
                   Launch a private, full-screen gameplay session with the new analog joystick,
-                  rapid-fire control, projectiles, scoring, and arcade sound effects.
+                  star collection, score tracking, asteroid dodging, and arcade sound effects.
                 </p>
 
                 <button
@@ -461,8 +461,8 @@ export default function AdminDashboard({ initialTab = 'scores' }: Props) {
             <div className="grid grid-cols-2 border-t border-zinc-800/80 bg-black/30 sm:grid-cols-4">
               {[
                 ['360°', 'Analog movement'],
-                ['HOLD', 'Rapid fire'],
-                ['4', 'Sound effects'],
+                ['★', 'Eat the stars'],
+                ['3', 'Sound effects'],
                 ['PRIVATE', 'Owner access'],
               ].map(([value, label]) => (
                 <div key={label} className="border-b border-r border-zinc-800/70 px-4 py-4 last:border-r-0 sm:border-b-0">
