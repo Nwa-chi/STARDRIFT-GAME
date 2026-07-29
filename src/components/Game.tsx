@@ -1,5 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
+import { playGameSound } from '../utils/sound';
+import type { GameSound } from '../utils/sound';
 
 interface Props {
   onGameOver: (score: number) => void;
@@ -32,8 +34,6 @@ interface ScreenShake {
   intensity: number;
 }
 
-type SoundName = 'thrust' | 'collect' | 'gameOver';
-
 export default function Game({ onGameOver, onPause, setScore, paused, enhancedControls = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,50 +57,16 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
   const joystickRef = useRef<HTMLDivElement>(null);
   const joystickPointerRef = useRef<number | null>(null);
   const joystickInputRef = useRef({ x: 0, y: 0 });
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const joystickIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [joystickVisual, setJoystickVisual] = useState({ x: 0, y: 0, active: false });
   const spawnTimerRef = useRef(0);
   const starTimerRef = useRef(0);
   const diffRef = useRef(1);
   const gameOverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const playSound = useCallback((sound: SoundName) => {
+  const playSound = useCallback((sound: GameSound) => {
     if (!enhancedControls) return;
-
-    const AudioContextClass = window.AudioContext;
-    if (!AudioContextClass) return;
-
-    const audio = audioContextRef.current ?? new AudioContextClass();
-    audioContextRef.current = audio;
-    if (audio.state === 'suspended') {
-      void audio.resume();
-    }
-
-    const now = audio.currentTime;
-    const oscillator = audio.createOscillator();
-    const gain = audio.createGain();
-    const settings: Record<SoundName, {
-      type: OscillatorType;
-      start: number;
-      end: number;
-      duration: number;
-      volume: number;
-    }> = {
-      thrust: { type: 'sawtooth', start: 120, end: 76, duration: 0.14, volume: 0.025 },
-      collect: { type: 'sine', start: 660, end: 1040, duration: 0.16, volume: 0.09 },
-      gameOver: { type: 'sawtooth', start: 150, end: 42, duration: 0.5, volume: 0.12 },
-    };
-    const config = settings[sound];
-
-    oscillator.type = config.type;
-    oscillator.frequency.setValueAtTime(config.start, now);
-    oscillator.frequency.exponentialRampToValueAtTime(config.end, now + config.duration);
-    gain.gain.setValueAtTime(config.volume, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + config.duration);
-    oscillator.connect(gain);
-    gain.connect(audio.destination);
-    oscillator.start(now);
-    oscillator.stop(now + config.duration);
+    void playGameSound(sound);
   }, [enhancedControls]);
 
   const spawnStar = useCallback(() => {
@@ -603,9 +569,22 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
       y: Math.max(-1, Math.min(1, y / maxDistance)),
     };
     setJoystickVisual({ x, y, active: true });
+
+    if (joystickIdleTimerRef.current) {
+      clearTimeout(joystickIdleTimerRef.current);
+    }
+    joystickIdleTimerRef.current = setTimeout(() => {
+      joystickInputRef.current = { x: 0, y: 0 };
+      setJoystickVisual((visual) => ({ ...visual, x: 0, y: 0 }));
+      joystickIdleTimerRef.current = null;
+    }, 100);
   }, []);
 
   const resetJoystick = useCallback(() => {
+    if (joystickIdleTimerRef.current) {
+      clearTimeout(joystickIdleTimerRef.current);
+      joystickIdleTimerRef.current = null;
+    }
     joystickPointerRef.current = null;
     joystickInputRef.current = { x: 0, y: 0 };
     setJoystickVisual({ x: 0, y: 0, active: false });
@@ -672,11 +651,8 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
       document.removeEventListener('touchend', handleTouchEnd);
       cancelAnimationFrame(animFrameRef.current);
       if (gameOverTimerRef.current) clearTimeout(gameOverTimerRef.current);
+      if (joystickIdleTimerRef.current) clearTimeout(joystickIdleTimerRef.current);
       joystickInputRef.current = { x: 0, y: 0 };
-      if (audioContextRef.current) {
-        void audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
     };
   }, [enhancedControls, gameLoop, handleResize, handleKeyDown, handleKeyUp, handleTouchStart, handleTouchMove, handleTouchEnd, resetJoystick]);
 

@@ -3,6 +3,7 @@ import { signOut } from '@firebase/auth';
 import { ref, get, set, update, remove } from '@firebase/database';
 import { auth, database } from '../utils/firebase';
 import { getHighScores } from '../utils/scores';
+import { playGameSound } from '../utils/sound';
 import Game from './Game';
 
 interface PlayerScore {
@@ -171,6 +172,7 @@ export default function AdminDashboard({ initialTab = 'scores' }: Props) {
   };
 
   const launchPreview = () => {
+    void playGameSound('ready');
     restartPreview();
     setPreviewOpen(true);
   };
@@ -509,6 +511,15 @@ export default function AdminDashboard({ initialTab = 'scores' }: Props) {
             </div>
 
             <div className="pointer-events-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void playGameSound('ready')}
+                aria-label="Test game sound"
+                className="min-h-11 rounded-full border border-yellow-300/25 bg-yellow-300/10 px-3 text-[11px]
+                           font-bold uppercase tracking-wider text-yellow-200 backdrop-blur-md active:scale-95"
+              >
+                Sound
+              </button>
               <button
                 type="button"
                 onClick={restartPreview}
