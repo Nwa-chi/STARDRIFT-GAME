@@ -38,7 +38,7 @@ export default function StartScreen({ onStart }: Props) {
         <div className="text-zinc-500 text-xs md:text-sm space-y-1 mb-8">
           <p className="text-zinc-400 font-medium">Controls</p>
           <p>Desktop: WASD / Arrow Keys</p>
-          <p>Mobile: Touch & Drag</p>
+          <p>Mobile: Motion Joystick</p>
           <p className="text-zinc-600 mt-2">ESC or P to pause</p>
         </div>
 

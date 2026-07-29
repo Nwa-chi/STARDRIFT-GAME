@@ -9,6 +9,7 @@ import { getHighScores } from './utils/scores';
 import { onAuthStateChanged, signOut } from '@firebase/auth';
 import { auth } from './utils/firebase';
 import { isOwner } from './utils/owner';
+import { playGameSound } from './utils/sound';
 
 type GameState = 'start' | 'playing' | 'paused' | 'gameover' | 'admin-login' | 'admin';
 
@@ -46,6 +47,7 @@ export default function App() {
   }, []);
 
   const handleStart = useCallback(() => {
+    void playGameSound('ready');
     setScore(0);
     setNewHighScore(false);
     setGameState('playing');
@@ -116,12 +118,12 @@ export default function App() {
       )}
 
       {gameState === 'playing' && (
-        <Game onGameOver={handleGameOver} onPause={handlePause} setScore={setScore} />
+        <Game enhancedControls onGameOver={handleGameOver} onPause={handlePause} setScore={setScore} />
       )}
 
       {gameState === 'paused' && (
         <>
-          <Game onGameOver={handleGameOver} onPause={handlePause} setScore={setScore} paused />
+          <Game enhancedControls onGameOver={handleGameOver} onPause={handlePause} setScore={setScore} paused />
           <PauseOverlay onResume={handleResume} />
         </>
       )}
