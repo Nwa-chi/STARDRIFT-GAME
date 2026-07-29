@@ -19,8 +19,12 @@ export default function StartScreen({ onStart }: Props) {
             STARDRIFT
           </span>
         </h1>
-        <p className="text-zinc-400 text-sm md:text-base mb-4 tracking-widest uppercase">
+        <p className="text-zinc-400 text-sm md:text-base mb-2 tracking-widest uppercase">
           Dodge · Collect · Survive
+        </p>
+        <p className="mb-4 inline-flex rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1
+                      font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-yellow-300">
+          Public Release · v1.0.1
         </p>
 
         <button
