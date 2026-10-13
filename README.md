@@ -6,6 +6,7 @@ Navigate your ship through asteroid fields, collect glowing stars, and survive a
 
 - 🚀 **Tight Controls** - WASD/Arrow keys and a responsive virtual joystick
 - 🔊 **Arcade Sound** - Movement, star-collection, and game-over effects
+- 📳 **Haptic Feedback** - Vibration for movement, collected stars, and collisions on supported phones
 - ⭐ **Score System** - Collect stars for points, difficulty scales with score
 - 💥 **Juicy Feedback** - Screen shake, particle explosions, glowing effects
 - 📱 **Mobile Ready** - Full touch support, portrait orientation

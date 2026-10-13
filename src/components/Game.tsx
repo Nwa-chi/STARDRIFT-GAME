@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { playGameSound } from '../utils/sound';
 import type { GameSound } from '../utils/sound';
+import { playHaptic } from '../utils/haptics';
 
 interface Props {
   onGameOver: (score: number) => void;
@@ -371,8 +372,9 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
 
     if (enhancedControls) {
       // Owner-preview joystick movement
-      s.player.x += joystickInputRef.current.x * playerSpeed * dt;
-      s.player.y += joystickInputRef.current.y * playerSpeed * dt;
+      const joystickSpeed = playerSpeed * 0.75;
+      s.player.x += joystickInputRef.current.x * joystickSpeed * dt;
+      s.player.y += joystickInputRef.current.y * joystickSpeed * dt;
     } else if (touchRef.current.active) {
       // Current public touch-and-drag movement
       const tx = touchRef.current.x;
@@ -448,7 +450,10 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
         setScore(s.score);
         spawnScoreParticles(st.x, st.y);
         triggerShake(3 + diffRef.current * 0.3);
-        if (enhancedControls) playSound('collect');
+        if (enhancedControls) {
+          playSound('collect');
+          playHaptic('collect');
+        }
         s.stars.splice(i, 1);
       }
     }
@@ -465,7 +470,10 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
         s.gameOver = true;
         spawnExplosion(s.player.x, s.player.y);
         triggerShake(15);
-        if (enhancedControls) playSound('gameOver');
+        if (enhancedControls) {
+          playSound('gameOver');
+          playHaptic('collision');
+        }
 
         if (gameOverTimerRef.current) clearTimeout(gameOverTimerRef.current);
         gameOverTimerRef.current = setTimeout(() => {
@@ -596,6 +604,7 @@ export default function Game({ onGameOver, onPause, setScore, paused, enhancedCo
     e.currentTarget.setPointerCapture(e.pointerId);
     updateJoystick(e.clientX, e.clientY);
     playSound('thrust');
+    playHaptic('move');
   }, [playSound, updateJoystick]);
 
   const handleJoystickPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
