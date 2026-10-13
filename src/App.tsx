@@ -142,14 +142,19 @@ export default function App() {
 
       {/* Public policy link for app-store compliance */}
       {gameState === 'start' && (
-        <a
-          href="/privacy.html"
-          target="_blank"
-          rel="noreferrer"
-          className="absolute bottom-4 left-4 text-zinc-600 hover:text-zinc-400 text-[10px] transition-colors z-10"
-        >
-          Privacy
-        </a>
+        <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-1">
+          <a
+            href="/privacy.html"
+            target="_blank"
+            rel="noreferrer"
+            className="text-zinc-600 hover:text-zinc-400 text-[10px] transition-colors"
+          >
+            Privacy
+          </a>
+          <span className="font-mono text-[9px] font-semibold uppercase tracking-wider text-zinc-700">
+            V1.0.1
+          </span>
+        </div>
       )}
 
       {/* Back to game from admin */}
